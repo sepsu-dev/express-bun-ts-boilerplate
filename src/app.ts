@@ -10,6 +10,8 @@ import { sendSuccess, sendError } from './utils/response.util';
 import { APP_CONFIG } from './config';
 import { apiLimiter } from './config/rate-limiter';
 import { apiKeyMiddleware } from './middlewares/api-key.middleware';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app: Application = express();
 const PORT = APP_CONFIG.port;
@@ -26,11 +28,17 @@ app.use('/api', apiLimiter);
 // API Key authentication - only applies to /api/ routes
 app.use('/api', apiKeyMiddleware);
 
+// Serve static files for Swagger custom JS
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/swagger-assets', express.static(path.join(__dirname, 'public')));
+
 // Swagger Docs
 app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     swaggerOptions: {
         persistAuthorization: true,
     },
+    customJs: '/swagger-assets/swagger-custom.js',
 }));
 
 app.get('/', (_req: Request, res: Response) => {
